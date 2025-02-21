@@ -21,16 +21,9 @@ function rollout(mdp, policy_function, s0, max_steps=100)
 
     while !(s in mdp.terminate_from) && t < max_steps
         a = policy_function(mdp, s)
-        while true
-            a = policy_function(mdp, s)
-            a1 = policy_function(mdp, s)
-            if a == a1
-                break
-            end
-        end
         #println("choosing action: ", a)
         s, r = @gen(:sp, :r)(mdp, s, a)
-        r_total += r
+        r_total += discount(mdp)^t * r
         t += 1
     end
 
@@ -80,7 +73,7 @@ struct MonteCarloTreeSearch
     c::Float64
 end
 
-function MonteCarloTreeSearch(mdp::HW3.DenseGridWorld, d::Int=100, m::Int=7, c::Float64=200.0)
+function MonteCarloTreeSearch(mdp::HW3.DenseGridWorld, d::Int=100, m::Int=1000, c::Float64=200.0)
     S = statetype(mdp)
     A = actiontype(mdp)
     N = Dict{Tuple{S,A},Int}()
@@ -142,13 +135,13 @@ end
 
 function (mcts::MonteCarloTreeSearch)(s::Any)
     for k in 1:mcts.m
-        # #println("Iteration: ", k)
+        #println("Iteration: ", k)
         simulate!(mcts, s, mcts.d)
-        inchrome(visualize_tree(mcts.Q, mcts.N, mcts.T, SA[19, 19]))
+        # inchrome(visualize_tree(mcts.Q, mcts.N, mcts.T, SA[19, 19]))
     end
 end
 
-# mdp = HW3.DenseGridWorld(seed=4)
+mdp = HW3.DenseGridWorld(seed=4)
 # mcts = MonteCarloTreeSearch(mdp)
 # mcts(SA[19, 19])
 
@@ -162,29 +155,14 @@ function select_action(mdp, s)
 
 end
 
-# R = []
-# for i in 1:100
-
-#     s = rand(initialstate(mdp)) # random init state
-#     r_sum = 0.0
-#     for step in 1:100
-#         a = select_action(mdp, s)
-#         s, r = @gen(:sp, :r)(mdp, s, a)
-#         r_sum += r
-#         @show r_sum
-#         if s in mdp.terminate_from
-#             break
-#         end
-#     end
-#     push!(R, r_sum)
+# results = []
+# for _ in 1:100
+#     result = rollout(mdp, select_action, rand(initialstate(mdp)))
+#     @show result
+#     push!(results, result)
 # end
-
-# mean_r = mean(R)
-# std_r = std(R)
-# SEM_r = std_r / sqrt(length(R))
-# @show mean_r
-# @show std_r
-# @show SEM_r
+# @show heuristic_p_mean_results = mean(results)
+# @show heuristic_p_SEM_results = std(results) / sqrt(length(results))
 
 # Question 5:
 HW3.evaluate(select_action, "nicolas.perrault@colorado.edu")
