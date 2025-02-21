@@ -37,6 +37,7 @@ end
 function value_iteration_viz(mdp, tol=1e-6, max_itrs=100, gamma=0.95)
     R = reward_vectors(mdp)
     U = zeros(length(states(mdp)))
+
     for itr = 1:max_itrs
         U = [backup(mdp, U, s, R, gamma) for s in states(mdp)]
         println("Iteration $itr")
