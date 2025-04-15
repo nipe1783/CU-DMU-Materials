@@ -114,7 +114,7 @@ beliefvec(b::DiscreteBelief) = b.b # this function may be helpful to get the bel
 # QMDP
 #------
 
-function qmdp_solve(m; discount_factor=discount(m), max_iter=1, tol=1e-6)
+function qmdp_solve(m; discount_factor=discount(m), max_iter=1000, tol=1e-6)
     svec = ordered_states(m)
     avec = ordered_actions(m)
     nS = length(svec)
@@ -170,6 +170,7 @@ function qmdp_solve(m; discount_factor=discount(m), max_iter=1, tol=1e-6)
 
     return HW6AlphaVectorPolicy(alpha_vectors, avec)
 end
+
 
 
 # m = TigerPOMDP()
@@ -287,74 +288,74 @@ cancerPOMDP = QuickPOMDP(
 )
 
 
-# @assert has_consistent_distributions(cancerPOMDP)
+@assert has_consistent_distributions(cancerPOMDP)
 
-# m = cancerPOMDP
-# up = HW6Updater(m)
-# qmdp_p = qmdp_solve(m)
-# sarsop_p = solve(SARSOPSolver(), m)
-# N = 1000
-# max_steps = 1000
-# qmdp_returns = [
-#     simulate(RolloutSimulator(max_steps=max_steps), m, qmdp_p, up)
-#     for _ in 1:N
-# ]
-# mean_qmdp = mean(qmdp_returns)
-# std_qmdp = std(qmdp_returns)
-# sem_qmdp = std_qmdp / sqrt(N)
-# println("QMDP Policy:")
-# println("  Mean: ", mean_qmdp)
-# println("  SEM:  ", sem_qmdp)
+m = cancerPOMDP
+up = HW6Updater(m)
+qmdp_p = qmdp_solve(m)
+sarsop_p = solve(SARSOPSolver(), m)
+N = 1000
+max_steps = 1000
+qmdp_returns = [
+    simulate(RolloutSimulator(max_steps=max_steps), m, qmdp_p, up)
+    for _ in 1:N
+]
+mean_qmdp = mean(qmdp_returns)
+std_qmdp = std(qmdp_returns)
+sem_qmdp = std_qmdp / sqrt(N)
+println("QMDP Policy:")
+println("  Mean: ", mean_qmdp)
+println("  SEM:  ", sem_qmdp)
 
-# sarsop_returns = [
-#     simulate(RolloutSimulator(max_steps=max_steps), m, sarsop_p, up)
-#     for _ in 1:N
-# ]
-# mean_sarsop = mean(sarsop_returns)
-# std_sarsop = std(sarsop_returns)
-# sem_sarsop = std_sarsop / sqrt(N)
-# println("SARSOP Policy:")
-# println("  Mean: ", mean_sarsop)
-# println("  SEM:  ", sem_sarsop)
+sarsop_returns = [
+    simulate(RolloutSimulator(max_steps=max_steps), m, sarsop_p, up)
+    for _ in 1:N
+]
+mean_sarsop = mean(sarsop_returns)
+std_sarsop = std(sarsop_returns)
+sem_sarsop = std_sarsop / sqrt(N)
+println("SARSOP Policy:")
+println("  Mean: ", mean_sarsop)
+println("  SEM:  ", sem_sarsop)
 
-# #####################
-# # Heuristic Policy
-# #####################
+#####################
+# Heuristic Policy
+#####################
 
-# struct CancerHeuristicPolicy{QP<:Policy} <: Policy
-#     qmdp_p::QP
-# end
+struct CancerHeuristicPolicy{QP<:Policy} <: Policy
+    qmdp_p::QP
+end
 
-# function POMDPs.action(p::CancerHeuristicPolicy, b::DiscreteBelief)
-#     b_vec = beliefvec(b)
-#     svec = ordered_states(b.pomdp)
-#     idx_healthy = findfirst(==(:healthy), svec)
-#     idx_in_situ = findfirst(==(:in_situ), svec)
-#     idx_invasive = findfirst(==(:invasive), svec)
+function POMDPs.action(p::CancerHeuristicPolicy, b::DiscreteBelief)
+    b_vec = beliefvec(b)
+    svec = ordered_states(b.pomdp)
+    idx_healthy = findfirst(==(:healthy), svec)
+    idx_in_situ = findfirst(==(:in_situ), svec)
+    idx_invasive = findfirst(==(:invasive), svec)
 
-#     p_healthy = b_vec[idx_healthy]
-#     p_in_situ = b_vec[idx_in_situ]
-#     p_invasive = b_vec[idx_invasive]
+    p_healthy = b_vec[idx_healthy]
+    p_in_situ = b_vec[idx_in_situ]
+    p_invasive = b_vec[idx_invasive]
 
 
-#     if p_healthy < 0.95 && p_healthy > 0.8
-#         return :test
-#     else
-#         return POMDPs.action(p.qmdp_p, b)
-#     end
-# end
+    if p_healthy < 0.95 && p_healthy > 0.8
+        return :test
+    else
+        return POMDPs.action(p.qmdp_p, b)
+    end
+end
 
-# heur_policy = CancerHeuristicPolicy(qmdp_p)
-# heur_returns = [
-#     simulate(RolloutSimulator(max_steps=max_steps), m, heur_policy, up)
-#     for _ in 1:N
-# ]
-# mean_heur = mean(heur_returns)
-# std_heur = std(heur_returns)
-# sem_heur = std_heur / sqrt(N)
-# println("Heuristic Policy:")
-# println("  Mean: ", mean_heur)
-# println("  SEM:  ", sem_heur)
+heur_policy = CancerHeuristicPolicy(qmdp_p)
+heur_returns = [
+    simulate(RolloutSimulator(max_steps=max_steps), m, heur_policy, up)
+    for _ in 1:N
+]
+mean_heur = mean(heur_returns)
+std_heur = std(heur_returns)
+sem_heur = std_heur / sqrt(N)
+println("Heuristic Policy:")
+println("  Mean: ", mean_heur)
+println("  SEM:  ", sem_heur)
 
 ##################
 # Problem 2: LaserTag
@@ -383,4 +384,4 @@ m = LaserTagPOMDP()
 pomcp_p = pomcp_solve(m)
 up = DiscreteUpdater(m)
 println("Evaluating POMCP policy...")
-@show HW6.evaluate((pomcp_p, up), n_episodes=10)
+@show HW6.evaluate((pomcp_p, up), n_episodes=1000)
