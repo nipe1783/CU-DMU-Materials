@@ -1,1 +1,5 @@
 [deps]
+DMUStudent = "a176809d-bc77-421e-b60b-7b215d415e6e"
+POMDPModels = "355abbd5-f08e-5560-ac9e-8b5f2592a0ca"
+POMDPTools = "7588e00f-9cae-40de-98dc-e0c70c48cdd7"
+Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"

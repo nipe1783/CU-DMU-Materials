@@ -78,7 +78,7 @@ function qmdp_solve(m, discount=discount(m))
 
         # Fill in alpha vector calculation
         # Note that the ordering of the entries in the alpha vectors must be consistent with stateindex(m, s) (states(m) does not necessarily obey this order, but ordered_states(m) does.)
-        
+
     end
     return HW6AlphaVectorPolicy(alphas, acts)
 end
@@ -101,15 +101,15 @@ cancer = QuickPOMDP(
 
     # Fill in your actual code from last homework here
 
-    states = [:healthy, :in_situ, :invasive, :death],
-    actions = [:wait, :test, :treat],
-    observations = [true, false],
-    transition = (s, a) -> Deterministic(s),
-    observation = (a, sp) -> Deterministic(false),
-    reward = (s, a) -> 0.0,
-    discount = 0.99,
-    initialstate = Deterministic(:death),
-    isterminal = s->s==:death,
+    states=[:healthy, :in_situ, :invasive, :death],
+    actions=[:wait, :test, :treat],
+    observations=[true, false],
+    transition=(s, a) -> Deterministic(s),
+    observation=(a, sp) -> Deterministic(false),
+    reward=(s, a) -> 0.0,
+    discount=0.99,
+    initialstate=Deterministic(:death),
+    isterminal=s -> s == :death,
 )
 
 @assert has_consistent_distributions(cancer)
@@ -120,12 +120,12 @@ up = HW6Updater(cancer)
 
 heuristic = FunctionPolicy(function (b)
 
-                               # Fill in your heuristic policy here
-                               # Use pdf(b, s) to get the probability of a state
+    # Fill in your heuristic policy here
+    # Use pdf(b, s) to get the probability of a state
 
-                               return :wait
-                           end
-                          )
+    return :wait
+end
+)
 
 @show mean(simulate(RolloutSimulator(), cancer, qmdp_p, up) for _ in 1:1000)     # Should be approximately 66
 @show mean(simulate(RolloutSimulator(), cancer, heuristic, up) for _ in 1:1000)
@@ -147,9 +147,9 @@ up = DiscreteUpdater(m) # you may want to replace this with your updater to test
 using BasicPOMCP
 function pomcp_solve(m) # this function makes capturing m in the rollout policy more efficient
     solver = POMCPSolver(tree_queries=10,
-                         c=1.0,
-                         default_action=first(actions(m)),
-                         estimate_value=FORollout(FunctionPolicy(s->rand(actions(m)))))
+        c=1.0,
+        default_action=first(actions(m)),
+        estimate_value=FORollout(FunctionPolicy(s -> rand(actions(m)))))
     return solve(solver, m)
 end
 pomcp_p = pomcp_solve(m)
